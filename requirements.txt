@@ -1,0 +1,5 @@
+requests==2.31.0
+pywin32==306
+pycryptodomex==3.18.0
+pyngrok==6.0.0
+pyinstaller==5.13.2
